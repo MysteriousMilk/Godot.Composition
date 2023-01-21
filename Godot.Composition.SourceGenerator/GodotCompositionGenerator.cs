@@ -29,10 +29,13 @@ namespace Godot.Composition.SourceGenerator
                     .OfType<ClassDeclarationSyntax>()
                     .Where(cd => cd.DescendantNodes().OfType<AttributeSyntax>().Any()))
                 {
+                    if (declaredClass == null)
+                        continue;
+
                     var componentClassNodes = declaredClass
                         .DescendantNodes()
                         .OfType<AttributeSyntax>()
-                        .FirstOrDefault(a => a.DescendantTokens().Any(dt => dt.IsKind(SyntaxKind.IdentifierToken) && semanticModel.GetTypeInfo(dt.Parent).Type.Name == "ComponentAttribute"))
+                        .FirstOrDefault(a => a.DescendantTokens().Any(dt => dt.IsKind(SyntaxKind.IdentifierToken) && dt.Parent != null && semanticModel.GetTypeInfo(dt.Parent).Type?.Name == "ComponentAttribute"))
                         ?.DescendantTokens()
                         ?.Where(dt => dt.IsKind(SyntaxKind.IdentifierToken))
                         ?.ToList();
@@ -40,7 +43,7 @@ namespace Godot.Composition.SourceGenerator
                     var entityClassNodes = declaredClass
                         .DescendantNodes()
                         .OfType<AttributeSyntax>()
-                        .FirstOrDefault(a => a.DescendantTokens().Any(dt => dt.IsKind(SyntaxKind.IdentifierToken) && semanticModel.GetTypeInfo(dt.Parent).Type.Name == "EntityAttribute"))
+                        .FirstOrDefault(a => a.DescendantTokens().Any(dt => dt.IsKind(SyntaxKind.IdentifierToken) && dt.Parent != null && semanticModel.GetTypeInfo(dt.Parent).Type?.Name == "EntityAttribute"))
                         ?.DescendantTokens()
                         ?.Where(dt => dt.IsKind(SyntaxKind.IdentifierToken))
                         ?.ToList();
@@ -50,6 +53,20 @@ namespace Godot.Composition.SourceGenerator
                         var srcBuilder = new StringBuilder();
                         var attributeParentClass = semanticModel.GetTypeInfo(componentClassNodes.Last().Parent);
                         var classTypeSymbol = semanticModel.GetDeclaredSymbol(declaredClass);
+
+                        if (classTypeSymbol == null)
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(
+                                new DiagnosticDescriptor(id: "GDCOMP0001",
+                                    title: "blah blah",
+                                    messageFormat: "blah blah",
+                                    category: "Usage",
+                                    DiagnosticSeverity.Error,
+                                    isEnabledByDefault: true,
+                                    "blah blah"),
+                                declaredClass.GetLocation(),
+                                declaredClass.SyntaxTree.FilePath));
+                        }
 
                         WriteComponentClass(ref srcBuilder, ref attributeParentClass, classTypeSymbol);
 
@@ -70,36 +87,53 @@ namespace Godot.Composition.SourceGenerator
 
         private void WriteComponentClass(ref StringBuilder srcBuilder, ref TypeInfo attributeParentClass, INamedTypeSymbol classTypeSymbol)
         {
-            var namespaceSymbol = classTypeSymbol.ContainingNamespace;
+            var classNamespaceSymbol = classTypeSymbol.ContainingNamespace;
+            var attributeNamespaceSymbol = attributeParentClass.Type.ContainingNamespace;
 
             srcBuilder.AppendLine("using Godot;");
             srcBuilder.AppendLine("using Godot.Composition;");
-            srcBuilder.AppendLine();
 
-            if (namespaceSymbol != null && !namespaceSymbol.IsGlobalNamespace)
+            if (attributeNamespaceSymbol != null && !attributeNamespaceSymbol.IsGlobalNamespace)
             {
-                var classNs = namespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
-                srcBuilder.AppendLine("namespace " + classNs);
+                var attributeTypeNs = attributeNamespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+
+                if (!string.IsNullOrEmpty(attributeTypeNs) && attributeTypeNs != "Godot")
+                    srcBuilder.AppendLine("using " + attributeTypeNs + ";");
             }
 
-            srcBuilder.AppendLine("{");
-            srcBuilder.AppendLine("    public partial class " + classTypeSymbol.Name + " : Godot.Composition.IComponent");
-            srcBuilder.AppendLine("    {");
-            srcBuilder.AppendLine("        protected " + attributeParentClass.Type.Name + " parent;");
             srcBuilder.AppendLine();
 
-            WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type);
+            bool hasNamespace = false;
+            if (classNamespaceSymbol != null && !classNamespaceSymbol.IsGlobalNamespace)
+            {
+                var classNs = classNamespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+                if (!string.IsNullOrEmpty(classNs))
+                {
+                    hasNamespace = true;
+                    srcBuilder.AppendLine("namespace " + classNs);
+                    srcBuilder.AppendLine("{");
+                }
+            }
 
-            srcBuilder.AppendLine("    }");
-            srcBuilder.AppendLine("}");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "public partial class " + classTypeSymbol.Name + " : Godot.Composition.IComponent");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "{");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "    protected " + attributeParentClass.Type.Name + " parent;");
+            srcBuilder.AppendLine();
+
+            WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type, hasNamespace ? "        " : "    ");
+
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "}");
+
+            if (hasNamespace)
+                srcBuilder.AppendLine("}");
         }
 
-        private void WriteInitializeComponentMethod(ref StringBuilder srcBuilder, ITypeSymbol type)
+        private void WriteInitializeComponentMethod(ref StringBuilder srcBuilder, ITypeSymbol type, string indent)
         {
-            srcBuilder.AppendLine("        protected void InitializeComponent()");
-            srcBuilder.AppendLine("        {");
-            srcBuilder.AppendLine("            parent = GetParent<" + type.Name + ">();");
-            srcBuilder.AppendLine("        }");
+            srcBuilder.AppendLine(indent + "protected void InitializeComponent()");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    parent = GetParent<" + type.Name + ">();");
+            srcBuilder.AppendLine(indent + "}");
         }
 
         private void WriteEntityClass(ref StringBuilder srcBuilder, INamedTypeSymbol classTypeSymbol)
@@ -108,66 +142,75 @@ namespace Godot.Composition.SourceGenerator
 
             srcBuilder.AppendLine("using Godot;");
             srcBuilder.AppendLine("using Godot.Composition;");
+            srcBuilder.AppendLine("using System.Linq;");
             srcBuilder.AppendLine();
 
+            bool hasNamespace = false;
             if (namespaceSymbol != null && !namespaceSymbol.IsGlobalNamespace)
             {
                 var classNs = namespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
-                srcBuilder.AppendLine("namespace " + classNs);
+
+                if (!string.IsNullOrEmpty(classNs))
+                {
+                    hasNamespace = true;
+                    srcBuilder.AppendLine("namespace " + classNs);
+                    srcBuilder.AppendLine("{");
+                }
             }
 
-            srcBuilder.AppendLine("{");
-            srcBuilder.AppendLine("    public partial class " + classTypeSymbol.Name + " : Godot.Composition.IEntity");
-            srcBuilder.AppendLine("    {");
-            srcBuilder.AppendLine("        protected Godot.Composition.ComponentContainer container = new Godot.Composition.ComponentContainer();");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "public partial class " + classTypeSymbol.Name + " : Godot.Composition.IEntity");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "{");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "    protected Godot.Composition.ComponentContainer container = new Godot.Composition.ComponentContainer();");
             srcBuilder.AppendLine();
 
-            WriteInitializeEntityMethod(ref srcBuilder);
+            WriteInitializeEntityMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
-            WriteHasComponentMethod(ref srcBuilder);
+            WriteHasComponentMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
-            WriteGetComponentMethod(ref srcBuilder);
+            WriteGetComponentMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
-            WriteComponentsMethod(ref srcBuilder);
+            WriteComponentsMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
-            srcBuilder.AppendLine("    }");
-            srcBuilder.AppendLine("}");
+            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "}");
+
+            if (hasNamespace)
+                srcBuilder.AppendLine("}");
         }
 
-        private void WriteInitializeEntityMethod(ref StringBuilder srcBuilder)
+        private void WriteInitializeEntityMethod(ref StringBuilder srcBuilder, string indent)
         {
-            srcBuilder.AppendLine("        protected void InitializeEntity()");
-            srcBuilder.AppendLine("        {");
-            srcBuilder.AppendLine("            container.AddEntityComponents(this);");
-            srcBuilder.AppendLine("        }");
+            srcBuilder.AppendLine(indent + "protected void InitializeEntity()");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    container.AddEntityComponents(this);");
+            srcBuilder.AppendLine(indent + "}");
         }
 
-        private void WriteHasComponentMethod(ref StringBuilder srcBuilder)
+        private void WriteHasComponentMethod(ref StringBuilder srcBuilder, string indent)
         {
-            srcBuilder.AppendLine("        public bool HasComponent<T>() where T : Godot.Node");
-            srcBuilder.AppendLine("        {");
-            srcBuilder.AppendLine("            return container.HasComponent<T>();");
-            srcBuilder.AppendLine("        }");
+            srcBuilder.AppendLine(indent + "public bool HasComponent<T>() where T : Godot.Node");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    return container.HasComponent<T>();");
+            srcBuilder.AppendLine(indent + "}");
         }
 
-        private void WriteGetComponentMethod(ref StringBuilder srcBuilder)
+        private void WriteGetComponentMethod(ref StringBuilder srcBuilder, string indent)
         {
-            srcBuilder.AppendLine("        public T GetComponent<T>() where T : Godot.Node");
-            srcBuilder.AppendLine("        {");
-            srcBuilder.AppendLine("            return container.GetComponent<T>();");
-            srcBuilder.AppendLine("        }");
+            srcBuilder.AppendLine(indent + "public T GetComponent<T>() where T : Godot.Node");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    return container.GetComponent<T>();");
+            srcBuilder.AppendLine(indent + "}");
         }
 
-        private void WriteComponentsMethod(ref StringBuilder srcBuilder)
+        private void WriteComponentsMethod(ref StringBuilder srcBuilder, string indent)
         {
-            srcBuilder.AppendLine("        public System.Collections.Generic.IEnumerable<Godot.Composition.IComponent> Components()");
-            srcBuilder.AppendLine("        {");
-            srcBuilder.AppendLine("            return container.AsEnumerable();");
-            srcBuilder.AppendLine("        }");
+            srcBuilder.AppendLine(indent + "public System.Collections.Generic.IEnumerable<Godot.Composition.IComponent> Components()");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    return container.AsEnumerable();");
+            srcBuilder.AppendLine(indent + "}");
         }
     }
 }
