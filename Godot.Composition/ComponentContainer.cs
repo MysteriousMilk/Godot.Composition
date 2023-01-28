@@ -7,7 +7,7 @@ namespace Godot.Composition
 {
     public class ComponentContainer : IEnumerable<IComponent>, ICollection<IComponent>
     {
-        private Dictionary<Type, WeakReference<IComponent>> components;
+        private Dictionary<Type, List<WeakReference<IComponent>>> components;
 
         /// <summary>
         /// Number of components in the container.
@@ -24,7 +24,7 @@ namespace Godot.Composition
         /// </summary>
         public ComponentContainer()
         {
-            components = new Dictionary<Type, WeakReference<IComponent>>();
+            components = new Dictionary<Type, List<WeakReference<IComponent>>>();
         }
 
         /// <summary>
@@ -68,12 +68,40 @@ namespace Godot.Composition
             var searchType = typeof(T);
             T component = default(T);
 
-            if (components.ContainsKey(searchType))
+            if (components.ContainsKey(searchType) && components[searchType].Count > 0)
             {
-                if (components[searchType].TryGetTarget(out IComponent c))
+                if (components[searchType].First().TryGetTarget(out IComponent c))
                     component = (T)c;
                 else
                     components.Remove(searchType);
+            }
+
+            return component;
+        }
+
+        /// <summary>
+        /// Gets the component specified by type T.
+        /// </summary>
+        /// <typeparam name="T">The type of <see cref="Component{T}"/> to check for.</typeparam>
+        /// <returns>
+        /// Null if the <see cref="Entity"/> does not have the <see cref="Component{T}"/>, 
+        /// otherwise, the <see cref="Component{T}"/>.
+        /// </returns>
+        public T GetComponentByName<T>(string name) where T : Node
+        {
+            var searchType = typeof(T);
+            T component = default(T);
+
+            if (components.ContainsKey(searchType) && components[searchType].Count > 0)
+            {
+                var match = components[searchType].FirstOrDefault(x =>
+                {
+                    x.TryGetTarget(out IComponent c);
+                    return c.Name == name;
+                });
+
+                if (match != null && match.TryGetTarget(out IComponent c))
+                    component = (T)c;
             }
 
             return component;
@@ -83,19 +111,25 @@ namespace Godot.Composition
         #region IEnumerableT
         public IEnumerator<IComponent> GetEnumerator()
         {
-            foreach (var weakComponent in components.Values)
+            foreach (var componentList in components.Values)
             {
-                if (weakComponent.TryGetTarget(out IComponent c))
-                    yield return c;
+                foreach (var weakComponent in componentList)
+                {
+                    if (weakComponent.TryGetTarget(out IComponent c))
+                        yield return c;
+                }
             }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            foreach (var weakComponent in components.Values)
+            foreach (var componentList in components.Values)
             {
-                if (weakComponent.TryGetTarget(out IComponent c))
-                    yield return c;
+                foreach (var weakComponent in componentList)
+                {
+                    if (weakComponent.TryGetTarget(out IComponent c))
+                        yield return c;
+                }
             }
         }
         #endregion
@@ -106,11 +140,13 @@ namespace Godot.Composition
             if (item is not Node)
                 throw new ArgumentException("Component must be a node.", nameof(item));
 
-            if (!components.ContainsKey(item.GetType()))
-            {
-                var weakRef = new WeakReference<IComponent>(item);
-                components.Add(item.GetType(), weakRef);
-            }
+            var key = item.GetType();
+
+            if (!components.ContainsKey(key))
+                components.Add(key, new List<WeakReference<IComponent>>());
+
+            var weakRef = new WeakReference<IComponent>(item);
+            components[key].Add(weakRef);
         }
 
         public void Clear()
@@ -120,13 +156,22 @@ namespace Godot.Composition
 
         public bool Contains(IComponent item)
         {
-            return components.Values.Any(c =>
+            bool contains = false;
+            foreach (var componentList in components.Values)
             {
-                bool found = false;
-                if (c.TryGetTarget(out IComponent target))
-                    found = ReferenceEquals(target, item);
-                return found;
-            });
+                contains = componentList.Any(c =>
+                {
+                    bool found = false;
+                    if (c.TryGetTarget(out IComponent target))
+                        found = ReferenceEquals(target, item);
+                    return found;
+                });
+
+                if (contains)
+                    break;
+            }
+
+            return contains;
         }
 
         public void CopyTo(IComponent[] array, int arrayIndex)

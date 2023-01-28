@@ -172,6 +172,9 @@ namespace Godot.Composition.SourceGenerator
             WriteGetComponentMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
+            WriteGetComponentByNameMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            srcBuilder.AppendLine();
+
             WriteComponentsMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
             srcBuilder.AppendLine();
 
@@ -202,6 +205,14 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine(indent + "public T GetComponent<T>() where T : Godot.Node");
             srcBuilder.AppendLine(indent + "{");
             srcBuilder.AppendLine(indent + "    return container.GetComponent<T>();");
+            srcBuilder.AppendLine(indent + "}");
+        }
+
+        private void WriteGetComponentByNameMethod(ref StringBuilder srcBuilder, string indent)
+        {
+            srcBuilder.AppendLine(indent + "public T GetComponentByName<T>(string name) where T : Godot.Node");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    return container.GetComponentByName<T>(name);");
             srcBuilder.AppendLine(indent + "}");
         }
 

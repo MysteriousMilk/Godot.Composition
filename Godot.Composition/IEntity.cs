@@ -22,6 +22,17 @@ namespace Godot.Composition
         T GetComponent<T>() where T : Node;
 
         /// <summary>
+        /// Gets the component specified by type T.
+        /// </summary>
+        /// <typeparam name="T">The type of <see cref="IComponent"/> to check for.</typeparam>
+        /// <param name="name">The name of the component/node in the scene tree.</param>
+        /// <returns>
+        /// Null if the <see cref="Entity"/> does not have the <see cref="IComponent"/>, 
+        /// otherwise, the <see cref="IComponent"/>.
+        /// </returns>
+        T GetComponentByName<T>(string name) where T : Node;
+
+        /// <summary>
         /// Enumerates all components attached to the <see cref="Entity"/>.
         /// </summary>
         /// <returns>An enumerable collection of <see cref="IComponent"/>s.</returns>
