@@ -103,29 +103,24 @@ namespace Godot.Composition.SourceGenerator
 
             srcBuilder.AppendLine();
 
-            bool hasNamespace = false;
             if (classNamespaceSymbol != null && !classNamespaceSymbol.IsGlobalNamespace)
             {
                 var classNs = classNamespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
                 if (!string.IsNullOrEmpty(classNs))
                 {
-                    hasNamespace = true;
-                    srcBuilder.AppendLine("namespace " + classNs);
-                    srcBuilder.AppendLine("{");
+                    srcBuilder.AppendLine("namespace " + classNs + ";");
+                    srcBuilder.AppendLine();
                 }
             }
 
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "public partial class " + classTypeSymbol.Name + " : Godot.Composition.IComponent");
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "{");
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "    protected " + attributeParentClass.Type.Name + " parent;");
+            srcBuilder.AppendLine("public partial class " + classTypeSymbol.Name + " : Godot.Composition.IComponent");
+            srcBuilder.AppendLine("{");
+            srcBuilder.AppendLine("    protected " + attributeParentClass.Type.Name + " parent;");
             srcBuilder.AppendLine();
 
-            WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type, hasNamespace ? "        " : "    ");
+            WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type, "    ");
 
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "}");
-
-            if (hasNamespace)
-                srcBuilder.AppendLine("}");
+            srcBuilder.AppendLine("}");
         }
 
         private void WriteInitializeComponentMethod(ref StringBuilder srcBuilder, ITypeSymbol type, string indent)
@@ -145,43 +140,38 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine("using System.Linq;");
             srcBuilder.AppendLine();
 
-            bool hasNamespace = false;
             if (namespaceSymbol != null && !namespaceSymbol.IsGlobalNamespace)
             {
                 var classNs = namespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
 
                 if (!string.IsNullOrEmpty(classNs))
                 {
-                    hasNamespace = true;
-                    srcBuilder.AppendLine("namespace " + classNs);
-                    srcBuilder.AppendLine("{");
+                    srcBuilder.AppendLine("namespace " + classNs + ";");
+                    srcBuilder.AppendLine();
                 }
             }
 
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "public partial class " + classTypeSymbol.Name + " : Godot.Composition.IEntity");
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "{");
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "    protected Godot.Composition.ComponentContainer container = new Godot.Composition.ComponentContainer();");
+            srcBuilder.AppendLine("public partial class " + classTypeSymbol.Name + " : Godot.Composition.IEntity");
+            srcBuilder.AppendLine("{");
+            srcBuilder.AppendLine("    protected Godot.Composition.ComponentContainer container = new Godot.Composition.ComponentContainer();");
             srcBuilder.AppendLine();
 
-            WriteInitializeEntityMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            WriteInitializeEntityMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
-            WriteHasComponentMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            WriteHasComponentMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
-            WriteGetComponentMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            WriteGetComponentMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
-            WriteGetComponentByNameMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            WriteGetComponentByNameMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
-            WriteComponentsMethod(ref srcBuilder, hasNamespace ? "        " : "    ");
+            WriteComponentsMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
-            srcBuilder.AppendLine(hasNamespace ? "    " : "" + "}");
-
-            if (hasNamespace)
-                srcBuilder.AppendLine("}");
+            srcBuilder.AppendLine("}");
         }
 
         private void WriteInitializeEntityMethod(ref StringBuilder srcBuilder, string indent)
