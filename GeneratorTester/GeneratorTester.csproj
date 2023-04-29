@@ -1,4 +1,4 @@
-﻿<Project Sdk="Godot.NET.Sdk/4.0.2-rc.1">
+﻿<Project Sdk="Godot.NET.Sdk/4.0.2">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
