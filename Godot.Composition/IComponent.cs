@@ -1,6 +1,5 @@
-﻿namespace Godot.Composition
+﻿namespace Godot.Composition;
+
+public interface IComponent : INode
 {
-    public interface IComponent : INode
-    {
-    }
 }

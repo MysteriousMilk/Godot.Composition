@@ -1,8 +1,7 @@
 ﻿using System;
 
-namespace Godot.Composition
+namespace Godot.Composition;
+
+public class EntityAttribute : Attribute
 {
-    public class EntityAttribute : Attribute
-    {
-    }
 }
