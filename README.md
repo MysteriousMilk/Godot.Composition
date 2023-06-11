@@ -90,6 +90,10 @@ public partial class VelocityComponent : Node
     }
 }
 ```
+All component nodes for an entity should be placed as a direct child of the entity node with the scene in Godot. An example of a Godot scene tree with components can be scene below.
+
+![component-tree](https://github.com/MysteriousMilk/Godot.Composition/assets/6441268/1c0f10e0-9fe3-4439-b385-412ed979a45f)
+
 ## Accessing Components from an Entity
 Even with most logic abstracted into components, there will likely be some glue code required to bring everything together. If access to a specific component is needed in the Entity script, components can be retrieved as seen below.
 
