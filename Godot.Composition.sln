@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Godot.Composition.SourceGen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Godot.Composition", "Godot.Composition\Godot.Composition.csproj", "{4EB1A0A8-31DA-4578-9382-7D1E5F1D0EA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneratorTester", "GeneratorTester\GeneratorTester.csproj", "{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorTester", "GeneratorTester\GeneratorTester.csproj", "{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,8 +37,8 @@ Global
 		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
-		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
-		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
 		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
