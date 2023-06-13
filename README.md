@@ -67,13 +67,13 @@ using Godot.Composition;
 public partial class VelocityComponent : Node
 {
     [Export]
-	public float Acceleration { get; set; }
+    public float Acceleration { get; set; }
 
-	public Vector2 Velocity { get; private set; }
+    public Vector2 Velocity { get; private set; }
 
     public void AccelerateToVelocity(Vector2 vel)
-	{
-		Velocity = Velocity.Lerp(vel, 1f - Mathf.Exp(-Acceleration));
+    {
+        Velocity = Velocity.Lerp(vel, 1f - Mathf.Exp(-Acceleration));
     }
 
     public override void _Ready()
