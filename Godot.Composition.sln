@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Godot.Composition.SourceGenerator", "Godot.Composition.SourceGenerator\Godot.Composition.SourceGenerator.csproj", "{D29A4CB8-8F36-47F3-80E9-CB9B6D3F675D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Godot.Composition", "Godot.Composition\Godot.Composition.csproj", "{4EB1A0A8-31DA-4578-9382-7D1E5F1D0EA1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D29A4CB8-8F36-47F3-80E9-CB9B6D3F675D} = {D29A4CB8-8F36-47F3-80E9-CB9B6D3F675D}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorTester", "GeneratorTester\GeneratorTester.csproj", "{D05BC36D-6EE9-4E2D-8889-F1A1E1EE0AFE}"
 EndProject

@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" PrivateAssets="all" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /i /y &quot;$(OutDir)$(TargetFileName)&quot; &quot;$(SolutionDir)package\&quot;" />
+  </Target>
+
 </Project>
