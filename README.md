@@ -1,4 +1,5 @@
 # Godot.Composition
+[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.0.1-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.0.1)
 
 This library provides a solution for building game entities in Godot through composition over inheritance. Godot's node-based architecture requires some level of inheritance. However, minimizing inheritance and refactoring much of your game's logic into components may go a long way towards cleaner, more reusable code.
 
