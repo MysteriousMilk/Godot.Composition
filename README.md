@@ -1,5 +1,5 @@
 # Godot.Composition
-[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.0.1-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.0.1)
+[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.1-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.1.0)
 
 This library provides a solution for building game entities in Godot through composition over inheritance. Godot's node-based architecture requires some level of inheritance. However, minimizing inheritance and refactoring much of your game's logic into components may go a long way towards cleaner, more reusable code.
 
@@ -112,6 +112,59 @@ public partial class Player : CharacterBody2D
         var velocityComponent = GetComponent<VelocityComponent>();
         velocityComponent.AccelerateToVelocity(direction * maxSpeed);
         velocityComponent.Move();
+    }
+}
+```
+
+Components can also be retrieved using their interface type.
+
+```C#
+using Godot;
+using Godot.Composition;
+
+[Component(typeof(CharacterBody2D))]
+public partial class NetworkClientComponent : Node, INetworkComponent
+{
+    public long NetworkId { get; set; }
+
+    public override void _Ready()
+    {
+        InitializeComponent();
+    }
+}
+
+[Entity]
+public partial class Player : CharacterBody2D
+{
+    public override void _Ready()
+    {
+        InitializeEntity();
+
+        var networkComponent = GetComponent<INetworkComponent>();
+        networkComponent.NetworkId = Multiplayer.GetUniqueId();
+    }
+}
+```
+
+## Adding Component Dependencies
+Adding references to other components is easy with the *ComponentDependency* attribute. Adding a *ComponentDependency* attribute to a component will automatically insert a protected reference to the dependent component. See the example below.
+
+```C#
+using Godot;
+using Godot.Composition;
+
+[Component(typeof(CharacterBody2D))]
+[ComponentDependency(typeof(HealthComponent))]
+public partial class HitboxComponent : Area2D
+{
+    ...
+
+    public void OnAreaEntered(Area2D area)
+    {
+        // Area entered, calculated damage
+        double damage;
+
+        healthComponent.ApplyDamage(damage);
     }
 }
 ```
