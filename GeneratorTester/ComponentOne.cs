@@ -5,9 +5,7 @@ using System.ComponentModel;
 namespace GeneratorTester
 {
     [Component(typeof(CharacterBody2D))]
-    [ComponentDependency(typeof(ComponentOne))]
-    [ComponentDependency(typeof(ComponentTwo))]
-    public partial class TestComponent : Node
+    public partial class ComponentOne : Node
     {
         public override void _Ready()
         {
