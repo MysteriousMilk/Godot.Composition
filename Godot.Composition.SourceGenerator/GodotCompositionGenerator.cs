@@ -55,6 +55,27 @@ namespace Godot.Composition.SourceGenerator
                         ?.Where(dt => dt.IsKind(SyntaxKind.IdentifierToken))
                         ?.ToList();
 
+
+                    // The following checks for a method called "OnEntityReady" and if it doesn't exist, flags it to be generated.
+                    // TODO: Make this process more generic so it can be extended to add more methods if needed.
+                    bool generateEntityReadyMethod = true;
+
+                    var method = declaredClass
+                        .DescendantNodes()
+                        .OfType<MethodDeclarationSyntax>()
+                        .FirstOrDefault(m => m.DescendantTokens().Any(dt => dt.IsKind(SyntaxKind.IdentifierToken) && dt.ValueText == "OnEntityReady"));
+
+                    if (method != null)
+                    {
+                        if (method.ParameterList.Parameters.Count == 0 &&
+                            method.ReturnType.IsKind(SyntaxKind.PredefinedType) &&
+                            (method.ReturnType as PredefinedTypeSyntax).Keyword.IsKind(SyntaxKind.VoidKeyword))
+                        {
+                            // user has declared this method with the correct parameters and return type, so don't generate it
+                            generateEntityReadyMethod = false;
+                        }
+                    }
+
                     if (componentClassNodes != null)
                     {
                         var srcBuilder = new StringBuilder();
@@ -90,7 +111,7 @@ namespace Godot.Composition.SourceGenerator
                             }
                         }
 
-                        WriteComponentClass(ref srcBuilder, ref attributeParentClass, classTypeSymbol, componentRefNames);
+                        WriteComponentClass(ref srcBuilder, ref attributeParentClass, classTypeSymbol, componentRefNames, generateEntityReadyMethod);
 
                         context.AddSource($"{declaredClass.Identifier}_IComponent.g", SourceText.From(srcBuilder.ToString(), Encoding.UTF8));
                     }
@@ -107,7 +128,7 @@ namespace Godot.Composition.SourceGenerator
             }
         }
 
-        private void WriteComponentClass(ref StringBuilder srcBuilder, ref TypeInfo attributeParentClass, INamedTypeSymbol classTypeSymbol, List<Tuple<string, string>> componentRefNames)
+        private void WriteComponentClass(ref StringBuilder srcBuilder, ref TypeInfo attributeParentClass, INamedTypeSymbol classTypeSymbol, List<Tuple<string, string>> componentRefNames, bool generateEntityReadyMethod)
         {
             var classNamespaceSymbol = classTypeSymbol.ContainingNamespace;
             var attributeNamespaceSymbol = attributeParentClass.Type.ContainingNamespace;
@@ -147,8 +168,12 @@ namespace Godot.Composition.SourceGenerator
             WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type, "    ");
             srcBuilder.AppendLine();
             WriteComponentResolveDependenciesMethod(ref srcBuilder, componentRefNames, "    ");
-            srcBuilder.AppendLine();
-            WriteComponentEntityReadyMethod(ref srcBuilder, "    ");
+
+            if (generateEntityReadyMethod)
+            {
+                srcBuilder.AppendLine();
+                WriteComponentEntityReadyMethod(ref srcBuilder, "    ");
+            }
 
             srcBuilder.AppendLine("}");
         }
@@ -185,7 +210,7 @@ namespace Godot.Composition.SourceGenerator
 
         private void WriteComponentEntityReadyMethod(ref StringBuilder srcBuilder, string indent)
         {
-            srcBuilder.AppendLine(indent + "public virtual void OnEntityReady()");
+            srcBuilder.AppendLine(indent + "public void OnEntityReady()");
             srcBuilder.AppendLine(indent + "{");
             srcBuilder.AppendLine(indent + "}");
         }
