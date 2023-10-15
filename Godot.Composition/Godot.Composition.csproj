@@ -3,8 +3,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Godot.Composition</RootNamespace>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
     <Title>Godot.Composition</Title>
     <Version>$(AssemblyVersion)</Version>
     <Description>This library provides an approach for doing composition in Godot.</Description>
@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/MysteriousMilk/Godot.Composition</RepositoryUrl>
     <PackageTags>Godot;Godot4;gamedev;GameDevelopment;C#</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Company>MilkMediaProductions</Company>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\LICENSE">
