@@ -9,4 +9,10 @@ public interface IComponent : INode
     /// Resolves component reference dependencies specified for this component.
     /// </summary>
     void ResolveDependencies();
+
+    /// <summary>
+    /// Called in the parent <see cref="IEntity"/>'s Ready function after all
+    /// dependencies ahve been resolved.
+    /// </summary>
+    void OnEntityReady();
 }

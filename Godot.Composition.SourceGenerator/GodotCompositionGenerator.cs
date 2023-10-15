@@ -147,6 +147,8 @@ namespace Godot.Composition.SourceGenerator
             WriteInitializeComponentMethod(ref srcBuilder, attributeParentClass.Type, "    ");
             srcBuilder.AppendLine();
             WriteComponentResolveDependenciesMethod(ref srcBuilder, componentRefNames, "    ");
+            srcBuilder.AppendLine();
+            WriteComponentEntityReadyMethod(ref srcBuilder, "    ");
 
             srcBuilder.AppendLine("}");
         }
@@ -178,6 +180,13 @@ namespace Godot.Composition.SourceGenerator
             }
             
             srcBuilder.AppendLine(indent + "    }");
+            srcBuilder.AppendLine(indent + "}");
+        }
+
+        private void WriteComponentEntityReadyMethod(ref StringBuilder srcBuilder, string indent)
+        {
+            srcBuilder.AppendLine(indent + "public virtual void OnEntityReady()");
+            srcBuilder.AppendLine(indent + "{");
             srcBuilder.AppendLine(indent + "}");
         }
 
@@ -249,6 +258,9 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine(indent + "    container.AddEntityComponents(this);");
             srcBuilder.AppendLine(indent + "    ResolveDependencies();");
             srcBuilder.AppendLine(indent + "    isEntityInitialized = true;");
+            srcBuilder.AppendLine(indent + "    ");
+            srcBuilder.AppendLine(indent + "    foreach (var component in container)");
+            srcBuilder.AppendLine(indent + "        component.OnEntityReady();");
             srcBuilder.AppendLine(indent + "}");
         }
 
