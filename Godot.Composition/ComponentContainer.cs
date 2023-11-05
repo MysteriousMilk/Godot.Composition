@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Godot.Composition;
 
@@ -112,6 +114,22 @@ public class ComponentContainer : IEnumerable<IComponent>, ICollection<IComponen
         }
 
         return component;
+    }
+
+    /// <summary>
+    /// Gets the component by a specified type.
+    /// </summary>
+    /// <param name="type">The type of component to get.</param>
+    /// <returns>The first component of the given type, or null if no component in the conatiner matches the type.</returns>
+    public IComponent GetComponentByType(Type type)
+    {
+        if (components.ContainsKey(type) && 
+            components[type].Count > 0 &&
+            components[type].First().TryGetTarget(out IComponent c))
+        {
+            return c;
+        }
+        return null;
     }
     #endregion
 

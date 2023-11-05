@@ -12,6 +12,7 @@ public interface IComponent : INode
 
     /// <summary>
     /// Called in the parent <see cref="IEntity"/>'s Ready function after all
+    ///         
     /// dependencies ahve been resolved.
     /// </summary>
     void OnEntityReady();

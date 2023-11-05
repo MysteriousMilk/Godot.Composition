@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -221,6 +222,8 @@ namespace Godot.Composition.SourceGenerator
 
             srcBuilder.AppendLine("using Godot;");
             srcBuilder.AppendLine("using Godot.Composition;");
+            srcBuilder.AppendLine("using System;");
+            srcBuilder.AppendLine("using System.Collections.Generic;");
             srcBuilder.AppendLine("using System.Linq;");
             srcBuilder.AppendLine();
 
@@ -237,6 +240,7 @@ namespace Godot.Composition.SourceGenerator
 
             srcBuilder.AppendLine("public partial class " + classTypeSymbol.Name + " : Godot.Composition.IEntity");
             srcBuilder.AppendLine("{");
+            srcBuilder.AppendLine("    private System.Collections.Generic.List<System.Tuple<System.Type, Godot.StringName, Godot.Variant>> onReadySetList = new System.Collections.Generic.List<System.Tuple<System.Type, Godot.StringName, Godot.Variant>>();");
             srcBuilder.AppendLine("    protected Godot.Composition.ComponentContainer container = new Godot.Composition.ComponentContainer();");
             srcBuilder.AppendLine("    private bool isEntityInitialized = false;");
             srcBuilder.AppendLine();
@@ -262,6 +266,9 @@ namespace Godot.Composition.SourceGenerator
             WriteComponentsMethod(ref srcBuilder, "    ");
             srcBuilder.AppendLine();
 
+            WriteOnReadySetMethod(ref srcBuilder, "    ");
+            srcBuilder.AppendLine();
+
             srcBuilder.AppendLine("}");
         }
 
@@ -282,6 +289,15 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine(indent + "    ");
             srcBuilder.AppendLine(indent + "    container.AddEntityComponents(this);");
             srcBuilder.AppendLine(indent + "    ResolveDependencies();");
+            srcBuilder.AppendLine(indent + "    ");
+            srcBuilder.AppendLine(indent + "    foreach (var item in onReadySetList)");
+            srcBuilder.AppendLine(indent + "    {");
+            srcBuilder.AppendLine(indent + "        var component = container.GetComponentByType(item.Item1);");
+            srcBuilder.AppendLine(indent + "        if (component != null)");
+            srcBuilder.AppendLine(indent + "            component.Set(item.Item2, item.Item3);");
+            srcBuilder.AppendLine(indent + "    }");
+            srcBuilder.AppendLine(indent + "    ");
+            srcBuilder.AppendLine(indent + "    onReadySetList.Clear();");
             srcBuilder.AppendLine(indent + "    isEntityInitialized = true;");
             srcBuilder.AppendLine(indent + "    ");
             srcBuilder.AppendLine(indent + "    foreach (var component in container)");
@@ -327,6 +343,15 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine(indent + "public System.Collections.Generic.IEnumerable<Godot.Composition.IComponent> Components()");
             srcBuilder.AppendLine(indent + "{");
             srcBuilder.AppendLine(indent + "    return container.AsEnumerable();");
+            srcBuilder.AppendLine(indent + "}");
+        }
+
+        private void WriteOnReadySetMethod(ref StringBuilder srcBuilder, string indent)
+        {
+            srcBuilder.AppendLine(indent + "public void OnReadySet<T>(Godot.StringName propertyName, Godot.Variant val) where T : Godot.Composition.IComponent");
+            srcBuilder.AppendLine(indent + "{");
+            srcBuilder.AppendLine(indent + "    var type = typeof(T);");
+            srcBuilder.AppendLine(indent + "    onReadySetList.Add(new System.Tuple<System.Type, Godot.StringName, Godot.Variant>(type, propertyName, val));");
             srcBuilder.AppendLine(indent + "}");
         }
     }

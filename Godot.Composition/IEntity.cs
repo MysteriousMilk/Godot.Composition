@@ -1,3 +1,4 @@
+using Godot;
 using System.Collections.Generic;
 
 namespace Godot.Composition;
@@ -57,4 +58,14 @@ public interface IEntity : INode
     /// </summary>
     /// <returns>An enumerable collection of <see cref="IComponent"/>s.</returns>
     IEnumerable<IComponent> Components();
+
+    /// <summary>
+    /// Sets the value of a component once the component has been initialized.
+    /// This method is useful for "pre-setting" values after spawning an entity, since
+    /// the entity's _Ready method has not yet been called.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IComponent"/> to set the value on.</typeparam>
+    /// <param name="propertyName">Property within the component to set the value.</param>
+    /// <param name="val">Value to set.</param>
+    void OnReadySet<T>(Godot.StringName propertyName, Godot.Variant val) where T : IComponent;
 }
