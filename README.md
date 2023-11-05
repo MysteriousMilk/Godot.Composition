@@ -1,5 +1,5 @@
 # Godot.Composition
-[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.1.2-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.1.2)
+[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.2-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.2)
 
 This library provides a solution for building game entities in Godot through composition over inheritance. Godot's node-based architecture requires some level of inheritance. However, minimizing inheritance and refactoring much of your game's logic into components may go a long way towards cleaner, more reusable code.
 
@@ -165,6 +165,29 @@ public partial class HitboxComponent : Area2D
         double damage;
 
         healthComponent.ApplyDamage(damage);
+    }
+}
+```
+
+## Setting Component Values Programmatically
+Occationally, Entity nodes will be created or spawned using a C#. When instantiating Entities in this manner, the Entity's Components do not become available until the Entity's *_Ready* function is called when added to the Scene Tree. Instead of deferring a frame (or two) to set values on a component, you can queue up values to set during the *_Ready* function. Consider the following scenario. We are spawning fast moving projectile. We desire to associate some data with a *DamageComponent* on the projectile, but we don't want to wait several frames to set the value since the projectile's lifetime will be so short. Here we can use the OnReadySet method. See below.
+
+```C#
+using Godot;
+using Godot.Composition;
+
+[Entity]
+public partial class Gun : Node2D
+{
+    ...
+
+    public void Fire()
+    {
+        // instantiate projectile
+        var projectileScn = ResourceLoader.Load<PackedScene>("res://Projectile.tscn");
+        var projectile = projectileScn.Instantiate<Projectile>();
+
+        projectile.OnReadySet<DamageComponent>(DamageComponent.PropertyName.Damage, 20.0);
     }
 }
 ```
