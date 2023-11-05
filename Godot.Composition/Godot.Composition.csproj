@@ -4,7 +4,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Godot.Composition</RootNamespace>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.1.2.0</FileVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Title>Godot.Composition</Title>
     <Version>$(AssemblyVersion)</Version>
     <Description>This library provides an approach for doing composition in Godot.</Description>
