@@ -2,14 +2,26 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
 namespace Godot.Composition.SourceGenerator
 {
+    public class CompositionComponentRef
+    {
+        public string TypeName { get; set; }
+        public string TypeNamespace { get; set; }
+        public string VariableName { get; set; }
+
+        public CompositionComponentRef(string type, string ns, string varName)
+        {
+            TypeName = type;
+            TypeNamespace = ns;
+            VariableName = varName;
+        }
+    }
+
     [Generator]
     public class GodotCompositionGenerator : ISourceGenerator
     {
@@ -97,7 +109,7 @@ namespace Godot.Composition.SourceGenerator
                                 declaredClass.SyntaxTree.FilePath));
                         }
 
-                        List<Tuple<string, string>> componentRefNames = new List<Tuple<string, string>>();
+                        List<CompositionComponentRef> componentRefNames = new List<CompositionComponentRef>();
 
                         foreach (var attribute in componentRefAttributeNodes)
                         {
@@ -107,8 +119,12 @@ namespace Godot.Composition.SourceGenerator
                                 ?.ToList();
                             if (componentRefClassNodes != null && componentRefClassNodes.Count > 0)
                             {
-                                string typeName = semanticModel.GetTypeInfo(componentRefClassNodes.Last().Parent).Type.Name;
-                                componentRefNames.Add(new Tuple<string, string>(typeName, typeName.Substring(0, 1).ToLower() + typeName.Substring(1)));
+                                var typeInfo = semanticModel.GetTypeInfo(componentRefClassNodes.Last().Parent);
+                                string typeName = typeInfo.Type.Name;
+                                string typeNamespace = typeInfo.Type.ContainingNamespace?.Name ?? null;
+                                string varName = typeName.Substring(0, 1).ToLower() + typeName.Substring(1);
+
+                                componentRefNames.Add(new CompositionComponentRef(typeName, typeNamespace, varName));
                             }
                         }
 
@@ -129,10 +145,16 @@ namespace Godot.Composition.SourceGenerator
             }
         }
 
-        private void WriteComponentClass(ref StringBuilder srcBuilder, ref TypeInfo attributeParentClass, INamedTypeSymbol classTypeSymbol, List<Tuple<string, string>> componentRefNames, bool generateEntityReadyMethod)
+        private void WriteComponentClass(ref StringBuilder srcBuilder, ref TypeInfo attributeParentClass, INamedTypeSymbol classTypeSymbol, List<CompositionComponentRef> componentRefNames, bool generateEntityReadyMethod)
         {
             var classNamespaceSymbol = classTypeSymbol.ContainingNamespace;
             var attributeNamespaceSymbol = attributeParentClass.Type.ContainingNamespace;
+
+            string classNs = null;
+            if (classNamespaceSymbol != null && !classNamespaceSymbol.IsGlobalNamespace)
+            {
+                classNs = classNamespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
+            }
 
             srcBuilder.AppendLine("using Godot;");
             srcBuilder.AppendLine("using Godot.Composition;");
@@ -145,16 +167,21 @@ namespace Godot.Composition.SourceGenerator
                     srcBuilder.AppendLine("using " + attributeTypeNs + ";");
             }
 
+            var componentNamespaces = componentRefNames.Select(x => x.TypeNamespace).Distinct();
+
+            // ensure namespaces for component dependencies get added to the generated source
+            foreach (var ns in componentNamespaces)
+            {
+                if (!string.IsNullOrEmpty(ns) && ns != classNs)
+                    srcBuilder.AppendLine("using " +  ns + ";");
+            }
+
             srcBuilder.AppendLine();
 
-            if (classNamespaceSymbol != null && !classNamespaceSymbol.IsGlobalNamespace)
+            if (!string.IsNullOrEmpty(classNs))
             {
-                var classNs = classNamespaceSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted));
-                if (!string.IsNullOrEmpty(classNs))
-                {
-                    srcBuilder.AppendLine("namespace " + classNs + ";");
-                    srcBuilder.AppendLine();
-                }
+                srcBuilder.AppendLine("namespace " + classNs + ";");
+                srcBuilder.AppendLine();
             }
 
             srcBuilder.AppendLine("public partial class " + classTypeSymbol.Name + " : Godot.Composition.IComponent");
@@ -162,7 +189,7 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine("    protected " + attributeParentClass.Type.Name + " parent;");
 
             foreach (var compRefName in componentRefNames)
-                srcBuilder.AppendLine("    protected " + compRefName.Item1 + " " + compRefName.Item2 + ";");
+                srcBuilder.AppendLine("    protected " + compRefName.TypeName + " " + compRefName.VariableName + ";");
 
             srcBuilder.AppendLine();
 
@@ -193,7 +220,7 @@ namespace Godot.Composition.SourceGenerator
             srcBuilder.AppendLine(indent + "}");
         }
 
-        private void WriteComponentResolveDependenciesMethod(ref StringBuilder srcBuilder, List<Tuple<string, string>> componentRefNames, string indent)
+        private void WriteComponentResolveDependenciesMethod(ref StringBuilder srcBuilder, List<CompositionComponentRef> componentRefNames, string indent)
         {
             srcBuilder.AppendLine(indent + "public void ResolveDependencies()");
             srcBuilder.AppendLine(indent + "{");
@@ -202,7 +229,7 @@ namespace Godot.Composition.SourceGenerator
 
             foreach (var compRefName in componentRefNames)
             {
-                srcBuilder.AppendLine(indent + "        " + compRefName.Item2 + " = ent.GetComponent<" + compRefName.Item1 + ">();");
+                srcBuilder.AppendLine(indent + "        " + compRefName.VariableName + " = ent.GetComponent<" + compRefName.TypeName + ">();");
             }
             
             srcBuilder.AppendLine(indent + "    }");

@@ -36,4 +36,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="..\package\Godot.Composition.SourceGenerator.dll" />
+  </ItemGroup>
 </Project>
