@@ -3,8 +3,8 @@
     <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>Godot.Composition</RootNamespace>
-    <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <FileVersion>1.3.0.0</FileVersion>
+    <AssemblyVersion>1.3.1.0</AssemblyVersion>
+    <FileVersion>1.3.1.0</FileVersion>
     <Title>Godot.Composition</Title>
     <Version>$(AssemblyVersion)</Version>
     <Description>This library provides an approach for doing composition in Godot.</Description>

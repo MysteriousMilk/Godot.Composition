@@ -16,9 +16,5 @@ namespace GeneratorTester
             base._Ready();
             InitializeComponent();
         }
-
-        public void OnEntityReady()
-        {
-        }
     }
 }

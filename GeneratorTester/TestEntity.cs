@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace GeneratorTester
 {
     [Entity]
-    public partial class TestEntity : CharacterBody2D
+    public partial class TestEntity : BaseEntity
     {
         public override void _Ready()
         {
