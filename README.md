@@ -1,5 +1,5 @@
 # Godot.Composition
-[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.3-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.3)
+[![NuGet version (Godot.Composition)](https://img.shields.io/badge/nuget-v1.3.1-blue?style=flat-square)](https://www.nuget.org/packages/Godot.Composition/1.3.1)
 
 This library provides a solution for building game entities in Godot through composition over inheritance. Godot's node-based architecture requires some level of inheritance. However, minimizing inheritance and refactoring much of your game's logic into components may go a long way towards cleaner, more reusable code.
 
@@ -74,7 +74,7 @@ public partial class VelocityComponent : Node
 
     public void AccelerateToVelocity(Vector2 vel)
     {
-        Velocity = Velocity.Lerp(vel, 1f - Mathf.Exp(-Acceleration));
+        Velocity = vel + Acceleration;
     }
 
     public override void _Ready()
@@ -165,6 +165,29 @@ public partial class HitboxComponent : Area2D
         double damage;
 
         healthComponent.ApplyDamage(damage);
+    }
+}
+```
+
+## Entity Ready Callback
+Sometimes, its necessary to run code on a component immediately after an Entity node is ready. Godot.Composition allows the developer to setup a special function that will be called immediately after the parent Entity's *_Ready* function is called.
+
+Simply define a function called *void OnEntityReady()* on your component and it will be called automatically.
+
+```C#
+using Godot;
+using Godot.Composition;
+
+[Component(typeof(CharacterBody2D))]
+public partial class HealthComponent : Node
+{
+    ...
+
+    /// Called directly after the parent entity's
+    /// _Ready function.
+    public void OnEntityReady()
+    {
+        ...
     }
 }
 ```
